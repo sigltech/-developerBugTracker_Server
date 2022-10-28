@@ -15,9 +15,9 @@ route.post('/ticket', (req, res) => {
 });
 
 route.put('/ticket', (req, res) => {
-    const { _id, name, description, steps, version, assigned, creator, priority, time } = req.body;
+    const { _id, name, description, steps, version, assigned, creator, priority, time, status } = req.body;
 
-    ticketsModel.findByIdAndUpdate(_id, { name, description, steps, version, assigned, creator, priority, time })
+    ticketsModel.findByIdAndUpdate(_id, { name, description, steps, version, assigned, creator, priority, time, status })
         .then((ticket) => {
             if (!ticket) return res.status(400).send({ message: 'There was an error' });
             res.send({ message: 'Ticket updated' });

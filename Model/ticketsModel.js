@@ -10,6 +10,7 @@ const schema = new mongoose.Schema({
     creator: String,
     priority: String,
     time: String,
+    status: String,
 });
 
 const model = mongoose.model('Ticket', schema);

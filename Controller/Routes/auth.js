@@ -13,10 +13,13 @@ route.post('/users/register', (req, res) => {
             const user = new userModel({
                 name: req.body.name,
                 password: hash,
-                role: 'admin',
+                role: req.body.role,
             });
             user.save().then((user) => {
-                res.send('User created');
+                res.send({
+                    message: 'User created successfully',
+                    user: req.body,
+                });
             }
             ).catch((err) => {
                 res.send(err);
@@ -27,15 +30,20 @@ route.post('/users/register', (req, res) => {
 });
 
 route.put('/users/modify', (req, res) => {
-    const { _id, name, password, role } = req.body;
-    userModel.findByIdAndUpdate(_id, { name, password, role })
-        .then((user) => {
-            if (!user) return res.status(400).send({ message: 'There was an error' });
-            res.send({ message: 'User updated' });
-        })
-        .catch((err) => {
-            if (err) return res.status(400).send({ message: 'There was an error' });
+    const { name, password } = req.body;
+
+    // salt and hash the password
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(password, salt, (err, hash) => {
+            // Store hash in your password DB.
+            userModel.findOneAndUpdate({ name: name }, { password: hash }, { new: true }, (err, user) => {
+                if (err) {
+                    res.send(err);
+                }
+                res.send(user);
+            });
         });
+    });
 });
 
 route.post('/users/login', (req, res) => {
@@ -52,7 +60,9 @@ route.post('/users/login', (req, res) => {
                     };
 
                     const sendToken = (err, tokenPayload) => {
-                        if (err) return res.status(400).send({ message: 'There was an error' });
+                        if (err) {
+                            return res.status(400).send({ message: 'There was an error' });
+                        }
                         res.status(200).json({
                             token: tokenPayload,
                             message: 'User logged in',
@@ -80,7 +90,10 @@ route.post('/users/login', (req, res) => {
             });
         });
     } catch (err) {
-        res.send(err);
+        res.status(500).send({
+            message: 'There was a problem logging in',
+            error: err.message,
+        });
     }
 });
 
@@ -97,6 +110,25 @@ route.get('/users', (req, res) => {
 
 route.post('/users/logout', (req, res) => {
     res.send('User logged out');
+});
+
+route.post('/users/checkPassword', (req, res) => {
+    try {
+        const { name, password } = req.body;
+        userModel.findOne({ name }).then((user) => {
+            if (!user) return res.status(400).send({ message: 'User not found' });
+
+            bcrypt.compare(password, user.password, (err, result) => {
+                if (result) {
+                    res.send({ message: 'Password is correct' });
+                } else {
+                    res.send({ message: 'Wrong password' });
+                }
+            });
+        });
+    } catch (err) {
+        res.send(err);
+    }
 });
 
 
