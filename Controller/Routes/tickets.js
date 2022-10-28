@@ -2,7 +2,6 @@ const route = require('express').Router();
 const ticketsModel = require('../../Model/ticketsModel');
 
 route.post('/ticket', (req, res) => {
-    console.log(req.body);
     const data = req.body;
     // data._id = Math.random().toString();
     ticketsModel.create(data).then((ticket) => {
